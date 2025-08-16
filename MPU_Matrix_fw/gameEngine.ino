@@ -29,7 +29,7 @@ struct Bullet : public Movable {
   bool active = false;
 };
 const int enemyBulletNum = 5;
-const int heroBulletNum = 2;
+const int heroBulletNum = 3;
 Bullet hb[heroBulletNum];
 Bullet eb[enemyBulletNum];
 const int enemyNum = 6;
@@ -198,18 +198,33 @@ void makeFrame(float angle) {
       gameOver = true;
     }
   }
-  matrix.drawPixel(hx, 14, matrix.Color(0, map(h.hp, 0, 3, 0, 250), 0));
+  matrix.drawPixel(hx, 14, matrix.Color(0, 0, map(h.hp, 0, 3, 0, 250)));
   killEnemy();
 
-  drawBullets(hb, heroBulletNum, matrix.Color(0xf5, 0x9b, 0));
-  drawBullets(eb, enemyBulletNum, matrix.Color(0xf5, 0xf0, 0));
+  drawBullets(hb, heroBulletNum, matrix.Color(0xf5, 0x9b, 0) / 2);
+  drawBullets(eb, enemyBulletNum, matrix.Color(0xf5, 0xf0, 0) / 2);
 
-  // if (gameOver = true) {
-  //   for (int i = 0; i < 15; ++i) {
-  //     for (int j = 0; j < 15; ++i) {
-
-  //       }
-  //     }
-  //   }
-  // }
+  if (gameOver == true) {
+    for (int i = 0; i < 16; ++i) {
+      for (int j = 0; j < 16; ++j) {
+        matrix.drawPixel(j, i, matrix.Color(150, 0, 0));
+      }
+      delay(180);
+      matrix.show();
+    }
+    while (digitalRead(18)){
+      delay(180);
+    }
+    for(int i = 0; i < enemyBulletNum; ++i){
+      eb[i].active = false;
+    }
+    for(int i = 0; i < heroBulletNum; ++i){
+      hb[i].active = false;
+    }
+    for(int i = 0; i < enemyNum; ++i){
+      enemy[i].alive = false;
+    }
+    h.hp = 3;
+    gameOver = false;
+  }
 }
