@@ -155,7 +155,7 @@ void loop() {
   makeFrame(angle);
   matrix.show();    
 
-  delay(80);
+  delay(30);
 }
 
 
