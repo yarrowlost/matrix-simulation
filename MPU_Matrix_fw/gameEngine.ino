@@ -126,12 +126,6 @@ bool collision(Bullet* ba, int size, int x, int y);
 bool collision(Bullet* ba, int size, int x, int y) {
   for (int i = 0; i < size; ++i) {
     auto& b = ba[i];
-    Serial.print("check ");
-    Serial.print(i);
-    Serial.print(" ");
-    Serial.print(static_cast<int>(b.coord.y));
-    Serial.print(" ");
-    Serial.println(y);
     if (static_cast<int>(b.coord.x) == x && static_cast<int>(b.coord.y) == y && b.active) {
       b.active = false;
       return true;
@@ -140,17 +134,21 @@ bool collision(Bullet* ba, int size, int x, int y) {
   return false;
 }
 
-void killEnemy() {
+int killEnemy() {
+  int count = 0;
   for (int i = 0; i < enemyNum; ++i) {
     auto& e = enemy[i];
     if (e.alive && collision(hb, heroBulletNum, e.coord.x, i)) {
       e.alive = false;
-      Serial.println("Enemy killed " + i);
+      count++;
     }
   }
+  return count;
 }
 
 bool gameOver = false;
+int score = 0;
+int initDelay = 50; // min delay is 30 in the main loop, there we add some delay, that decremented each 5 sec
 
 void makeFrame(float angle) {
   //draw hero
@@ -168,6 +166,9 @@ void makeFrame(float angle) {
   if (millis() - enemySpawnTimer > 5000) {
     enemySpawnTimer = millis();
     spawnEnemy();
+    if (initDelay > 0) {
+      initDelay--;
+    }
   }
   //move enemy
   moveEnemy();
@@ -199,9 +200,9 @@ void makeFrame(float angle) {
     }
   }
   matrix.drawPixel(hx, 14, matrix.Color(0, 0, map(h.hp, 0, 3, 0, 250)));
-  killEnemy();
+  score += killEnemy();
 
-  drawBullets(hb, heroBulletNum, matrix.Color(0xf5, 0x9b, 0) / 2);
+  drawBullets(hb, heroBulletNum, matrix.Color(0, 0x9b, 0x80) / 2);
   drawBullets(eb, enemyBulletNum, matrix.Color(0xf5, 0xf0, 0) / 2);
 
   if (gameOver == true) {
@@ -209,22 +210,32 @@ void makeFrame(float angle) {
       for (int j = 0; j < 16; ++j) {
         matrix.drawPixel(j, i, matrix.Color(150, 0, 0));
       }
-      delay(180);
+      delay(100);
       matrix.show();
     }
-    while (digitalRead(18)){
+    matrix.setTextColor(matrix.Color(200, 200, 200));
+    matrix.setCursor(0, 0);
+    matrix.print(score);
+    matrix.show();
+    while (digitalRead(18)) {
       delay(180);
     }
-    for(int i = 0; i < enemyBulletNum; ++i){
+
+    // init game
+    score = 0;
+    initDelay = 50;
+    for (int i = 0; i < enemyBulletNum; ++i) {
       eb[i].active = false;
     }
-    for(int i = 0; i < heroBulletNum; ++i){
+    for (int i = 0; i < heroBulletNum; ++i) {
       hb[i].active = false;
     }
-    for(int i = 0; i < enemyNum; ++i){
+    for (int i = 0; i < enemyNum; ++i) {
       enemy[i].alive = false;
     }
     h.hp = 3;
     gameOver = false;
   }
+  
+  delay(initDelay);
 }
