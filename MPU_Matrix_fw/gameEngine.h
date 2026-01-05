@@ -1,4 +1,11 @@
+#pragma once
+
+#include <sound.h>
+
+MusicPlayer p(5, 120);
+
 const int size = 16;
+
 
 struct PV {
   PV() = default;
@@ -62,7 +69,7 @@ void moveEnemy() {
   }
 }
 
-void drawEnemy() {
+void drawEnemy(Adafruit_NeoMatrix& matrix) {
   for (int i = 0; i < enemyNum; ++i) {
     auto& e = enemy[i];
     if (e.alive) {
@@ -71,8 +78,6 @@ void drawEnemy() {
   }
 }
 
-
-void spawnBullet(Bullet* ba, int size, int x, int y, float speed);
 
 void spawnBullet(Bullet* ba, int size, int x, int y, float speed) {
 
@@ -90,8 +95,7 @@ void spawnBullet(Bullet* ba, int size, int x, int y, float speed) {
   }
 }
 
-void drawBullets(Bullet* ba, int size, uint16_t color);
-void drawBullets(Bullet* ba, int size, uint16_t color) {
+void drawBullets(Bullet* ba, int size, uint16_t color, Adafruit_NeoMatrix& matrix) {
   for (int i = 0; i < size; ++i) {
     const auto& b = ba[i];
     if (b.active) {
@@ -122,10 +126,11 @@ void enemyAttacks() {
   }
 }
 
-bool collision(Bullet* ba, int size, int x, int y);
+
 bool collision(Bullet* ba, int size, int x, int y) {
   for (int i = 0; i < size; ++i) {
     auto& b = ba[i];
+
     if (static_cast<int>(b.coord.x) == x && static_cast<int>(b.coord.y) == y && b.active) {
       b.active = false;
       return true;
@@ -141,16 +146,31 @@ int killEnemy() {
     if (e.alive && collision(hb, heroBulletNum, e.coord.x, i)) {
       e.alive = false;
       count++;
+      p.play(1);
     }
   }
   return count;
 }
 
-bool gameOver = false;
+
 int score = 0;
 int initDelay = 50; // min delay is 30 in the main loop, there we add some delay, that decremented each 5 sec
 
-void makeFrame(float angle) {
+
+void init() {
+  for (int i = 0; i < enemyBulletNum; ++i) {
+    eb[i].active = false;
+  }
+  for (int i = 0; i < heroBulletNum; ++i) {
+    hb[i].active = false;
+  }
+  for (int i = 0; i < enemyNum; ++i) {
+    enemy[i].alive = false;
+  }
+  h.hp = 3;
+}
+
+bool makeFrame(float angle, Adafruit_NeoMatrix& matrix) {
   //draw hero
   int hx = map(angle, -25, 25, 0, 15);
   if (hx < 0) {
@@ -179,63 +199,35 @@ void makeFrame(float angle) {
     enemyAttacks();
   }
 
-
   //draw enemy
-  drawEnemy();
+  drawEnemy(matrix);
+
   //fire
   if (!digitalRead(18) && pressed == false) {
+    p.play(0);
     spawnBullet(hb, heroBulletNum, hx, 13, -1);
     pressed = true;
   } else if (digitalRead(18)) {
     pressed = false;
   }
+
   //draw bullets
   moveBullets(hb, heroBulletNum);
   moveBullets(eb, enemyBulletNum);
 
   if (collision(eb, enemyBulletNum, hx, 14)) {
     h.hp--;
+    p.play(2);
     if (h.hp == 0) {
-      gameOver = true;
+      return false;
     }
   }
+
   matrix.drawPixel(hx, 14, matrix.Color(0, 0, map(h.hp, 0, 3, 0, 250)));
   score += killEnemy();
 
-  drawBullets(hb, heroBulletNum, matrix.Color(0, 0x9b, 0x80) / 2);
-  drawBullets(eb, enemyBulletNum, matrix.Color(0xf5, 0xf0, 0) / 2);
+  drawBullets(hb, heroBulletNum, matrix.Color(0xf5, 0x9b, 0) / 2, matrix);
+  drawBullets(eb, enemyBulletNum, matrix.Color(0xf5, 0xf0, 0) / 2, matrix);
 
-  if (gameOver == true) {
-    for (int i = 0; i < 16; ++i) {
-      for (int j = 0; j < 16; ++j) {
-        matrix.drawPixel(j, i, matrix.Color(150, 0, 0));
-      }
-      delay(100);
-      matrix.show();
-    }
-    matrix.setTextColor(matrix.Color(200, 200, 200));
-    matrix.setCursor(0, 0);
-    matrix.print(score);
-    matrix.show();
-    while (digitalRead(18)) {
-      delay(180);
-    }
-
-    // init game
-    score = 0;
-    initDelay = 50;
-    for (int i = 0; i < enemyBulletNum; ++i) {
-      eb[i].active = false;
-    }
-    for (int i = 0; i < heroBulletNum; ++i) {
-      hb[i].active = false;
-    }
-    for (int i = 0; i < enemyNum; ++i) {
-      enemy[i].alive = false;
-    }
-    h.hp = 3;
-    gameOver = false;
-  }
-  
-  delay(initDelay);
+  return true;
 }

@@ -1,26 +1,20 @@
-/***************************************************************************
-* Example sketch for the MPU6500_WE library
-*
-* This sketch shows how to get acceleration, gyroscocope and temperature 
-* data from the MPU6500. In essence, the difference to the MPU9250 is the
-* missing magnetometer. The shall only show how to "translate" all other 
-* MPU9250 example sketches for use of the MPU6500
-* 
-* For further information visit my blog:
-*
-* https://wolles-elektronikkiste.de/mpu9250-9-achsen-sensormodul-teil-1  (German)
-* https://wolles-elektronikkiste.de/en/mpu9250-9-axis-sensor-module-part-1  (English)
-* 
-***************************************************************************/
+
+
 #include <Adafruit_GFX.h>
 #include <Adafruit_NeoMatrix.h>
 #include <Adafruit_NeoPixel.h>
 #include <MPU6500_WE.h>
 #include <Wire.h>
 #include <cmath>
+#include <AceRoutine.h>
+#include <gameEngine.h>
+
 #define PIN 16
 #define MPU6500_ADDR 0x68
 
+
+
+using namespace ace_routine;
 /* There are several ways to create your MPU6500 object:
  * MPU6500_WE myMPU6500 = MPU6500_WE()              -> uses Wire / I2C Address = 0x68
  * MPU6500_WE myMPU6500 = MPU6500_WE(MPU6500_ADDR)  -> uses Wire / MPU6500_ADDR
@@ -35,6 +29,48 @@ Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(16, 16, PIN,
                                                NEO_GRB + NEO_KHZ800);
 
 
+
+class MainCoroutine : public Coroutine {
+
+  int runCoroutine() override {
+    COROUTINE_LOOP() {
+      xyzFloat gValue = myMPU6500.getGValues();
+
+      float angle = std::atan2(gValue.y, gValue.z) * 180 / 3.14;
+
+      matrix.fillScreen(0);
+
+      if (makeFrame(angle, matrix)) {
+        matrix.show();
+      } else {
+        static int i;
+        static int j;
+        for (i = 0; i < 16; ++i) {
+          for (j = 0; j < 16; ++j) {
+            matrix.drawPixel(j, i, matrix.Color(150, 0, 0));
+          }
+          COROUTINE_DELAY(180);
+          matrix.show();
+        }
+        matrix.setTextColor(matrix.Color(200, 200, 200));
+        matrix.setCursor(0, 0);
+        matrix.print(score);
+        matrix.show();
+
+        while (digitalRead(18)) {
+          COROUTINE_DELAY(180);
+        }
+
+        init();
+      }
+
+
+      COROUTINE_DELAY(30);
+    }
+  }
+};
+
+MainCoroutine mc;
 
 
 void setup() {
@@ -131,31 +167,9 @@ void setup() {
 
   matrix.setBrightness(20);
 
+  CoroutineScheduler::setup();
 }
 
 void loop() {
-
-  xyzFloat gValue = myMPU6500.getGValues();
-  xyzFloat gyr = myMPU6500.getGyrValues();
-  float temp = myMPU6500.getTemperature();
-  float resultantG = myMPU6500.getResultantG(gValue);
-  float angle = std::atan2(gValue.y, gValue.z) * 180 / 3.14;
-
-  //Serial.println("Acceleration in g (x,y,z):");
-  Serial.print(gValue.x);
-  Serial.print("\t");
-  Serial.print(gValue.y);
-  Serial.print("\t");
-  Serial.print(gValue.z);
-  Serial.print("\t");
-  Serial.println(angle * 180 / 3.14);
-
-  matrix.fillScreen(0);
-
-  makeFrame(angle);
-  matrix.show();    
-
-  delay(30);
+  CoroutineScheduler::loop();
 }
-
-
