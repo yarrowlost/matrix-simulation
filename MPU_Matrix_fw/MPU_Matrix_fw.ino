@@ -71,7 +71,7 @@ public:
           for (j = 0; j < 16; ++j) {
             matrix.drawPixel(j, i, matrix.Color(150, 0, 0));
           }
-          COROUTINE_DELAY(180);
+          COROUTINE_DELAY(100);
           matrix.show();
         }
         matrix.setTextColor(matrix.Color(200, 200, 200));
