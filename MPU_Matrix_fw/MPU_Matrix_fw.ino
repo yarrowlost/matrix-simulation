@@ -37,12 +37,12 @@ public:
   int runCoroutine() override {
 
     COROUTINE_LOOP() {
-      
+
 
       matrix.fillScreen(0);
 
       while (waitForStart) {
-        
+
         static int x = matrix.width();
         matrix.fillScreen(0);
         matrix.setTextColor(matrix.Color(200, 200, 200));
@@ -56,6 +56,12 @@ public:
         COROUTINE_DELAY(180);
 
         waitForStart = digitalRead(18);
+
+
+        while (!digitalRead(18)) {
+          COROUTINE_DELAY(180);
+        }
+        
       }
 
       xyzFloat gValue = myMPU6500.getGValues();
@@ -98,7 +104,6 @@ public:
 
   MusicPlayer &mPlayer;
   bool waitForStart = true;
-  
 };
 
 MainCoroutine mc(p);
