@@ -184,7 +184,7 @@ bool makeFrame(float angle, Adafruit_NeoMatrix& matrix) {
 
 
   //spawn enemy
-  if (millis() - enemySpawnTimer > 5000) {
+  if (millis() - enemySpawnTimer > 2000) {
     enemySpawnTimer = millis();
     spawnEnemy();
     if (initDelay > 0) {

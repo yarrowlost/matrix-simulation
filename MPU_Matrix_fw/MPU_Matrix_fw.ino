@@ -37,12 +37,14 @@ public:
   int runCoroutine() override {
 
     COROUTINE_LOOP() {
+      
 
       matrix.fillScreen(0);
 
       while (waitForStart) {
-        matrix.fillScreen(0);
+        
         static int x = matrix.width();
+        matrix.fillScreen(0);
         matrix.setTextColor(matrix.Color(200, 200, 200));
         matrix.setTextWrap(false);
         matrix.setCursor(x--, 4);
@@ -52,6 +54,7 @@ public:
         matrix.print("Start");
         matrix.show();
         COROUTINE_DELAY(180);
+
         waitForStart = digitalRead(18);
       }
 
@@ -81,6 +84,10 @@ public:
           COROUTINE_DELAY(180);
         }
 
+        while (!digitalRead(18)) {
+          COROUTINE_DELAY(180);
+        }
+
         init();
       }
 
@@ -91,6 +98,7 @@ public:
 
   MusicPlayer &mPlayer;
   bool waitForStart = true;
+  
 };
 
 MainCoroutine mc(p);
