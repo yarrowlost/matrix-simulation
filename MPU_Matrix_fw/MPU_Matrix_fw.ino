@@ -1,5 +1,3 @@
-
-
 #include <Adafruit_GFX.h>
 #include <Adafruit_NeoMatrix.h>
 #include <Adafruit_NeoPixel.h>
@@ -8,7 +6,8 @@
 #include <cmath>
 #include <AceRoutine.h>
 #include <gameEngine.h>
-
+#include <sound.h>
+#include <Fonts/TomThumb.h>
 #define PIN 16
 #define MPU6500_ADDR 0x68
 
@@ -31,18 +30,38 @@ Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(16, 16, PIN,
 
 
 class MainCoroutine : public Coroutine {
+public:
+  MainCoroutine(MusicPlayer &p)
+    : mPlayer(p) {}
 
   int runCoroutine() override {
-    COROUTINE_LOOP() {
-      xyzFloat gValue = myMPU6500.getGValues();
 
-      float angle = std::atan2(gValue.y, gValue.z) * 180 / 3.14;
+    COROUTINE_LOOP() {
 
       matrix.fillScreen(0);
+
+      while (waitForStart) {
+        matrix.fillScreen(0);
+        static int x = matrix.width();
+        matrix.setTextColor(matrix.Color(200, 200, 200));
+        matrix.setTextWrap(false);
+        matrix.setCursor(x--, 4);
+        if (x < -30) {
+          x = matrix.width();
+        }
+        matrix.print("Start");
+        matrix.show();
+        COROUTINE_DELAY(180);
+        waitForStart = digitalRead(18);
+      }
+
+      xyzFloat gValue = myMPU6500.getGValues();
+      float angle = std::atan2(gValue.y, gValue.z) * 180 / 3.14;
 
       if (makeFrame(angle, matrix)) {
         matrix.show();
       } else {
+        mPlayer.play(3);
         static int i;
         static int j;
         for (i = 0; i < 16; ++i) {
@@ -53,9 +72,10 @@ class MainCoroutine : public Coroutine {
           matrix.show();
         }
         matrix.setTextColor(matrix.Color(200, 200, 200));
-        matrix.setCursor(0, 0);
+        matrix.setCursor(1, 4);
         matrix.print(score);
         matrix.show();
+        waitForStart = true;
 
         while (digitalRead(18)) {
           COROUTINE_DELAY(180);
@@ -68,9 +88,12 @@ class MainCoroutine : public Coroutine {
       COROUTINE_DELAY(30);
     }
   }
+
+  MusicPlayer &mPlayer;
+  bool waitForStart = true;
 };
 
-MainCoroutine mc;
+MainCoroutine mc(p);
 
 
 void setup() {
@@ -89,6 +112,7 @@ void setup() {
   Serial.println("Done!");
 
   myMPU6500.enableGyrDLPF();
+
   //myMPU6500.disableGyrDLPF(MPU6500_BW_WO_DLPF_8800); // bandwdith without DLPF
 
   /*  Digital Low Pass Filter for the gyroscope must be enabled to choose the level. 

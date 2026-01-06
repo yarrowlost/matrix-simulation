@@ -168,6 +168,7 @@ void init() {
     enemy[i].alive = false;
   }
   h.hp = 3;
+  score = 0;
 }
 
 bool makeFrame(float angle, Adafruit_NeoMatrix& matrix) {

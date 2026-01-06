@@ -115,7 +115,7 @@ struct Note {
 };
 
 Note fireSFX[] = {
-  { NOTE_C6, N64 }, { NOTE_A5, N64 }//, { NOTE_F5, N64 }, { NOTE_C5, N32 }
+  { NOTE_C6, N64 }, { NOTE_A5, N64 }  //, { NOTE_F5, N64 }, { NOTE_C5, N32 }
 };
 
 Note hitEnemySFX[] = {
@@ -126,7 +126,16 @@ Note takeDamageSFX[] = {
   { NOTE_G3, N32 }, { NOTE_DS3, N32 }, { NOTE_G3, N32 }
 };
 
-
+Note gameOver[] = {
+  { NOTE_DS5, N32 }, { NOTE_D5, N32 }, { NOTE_CS5, N32 },  // Quick chromatic drop
+  { NOTE_C5, N16 },
+  { NOTE_B4, N16 },
+  { NOTE_AS4, N16 },
+  { NOTE_A4, N16 },
+  { NOTE_GS4, N8 },
+  { NOTE_G4, N8 },
+  { NOTE_C4, N2 }  // Final long low note
+};
 // 🔊 ESP Music sınıfı
 class MusicPlayer : public Coroutine {
 
@@ -145,9 +154,9 @@ public:
       while (noteIndex < length) {
 
         Serial.print("play note");
-      
+
         Serial.println(noteIndex);
-        auto note = melody[noteIndex ++];
+        auto note = melody[noteIndex++];
 
         if (note.pitch == NOTE_REST) {
           noTone(pin);
@@ -176,6 +185,10 @@ public:
       case 2:
         melody = takeDamageSFX;
         length = sizeof(takeDamageSFX) / sizeof(Note);
+        break;
+      case 3:
+        melody = gameOver;
+        length = sizeof(gameOver) / sizeof(Note);
         break;
       default: break;
     }
